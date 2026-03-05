@@ -44,15 +44,15 @@ void Sudoku::makeMove()
 	char ch = getMoveType("Do you want to add or remove a number from the field?\n(a/r): ");
 	if ( ch == 'r' )
 	{
-		int row = getNum("Choose row: ") - 1;
-		int col = getNum("Choose column: ") - 1;
+		int row = getSudokuNum("Choose row: ") - 1;
+		int col = getSudokuNum("Choose column: ") - 1;
 		removeNumFromField(row, col);
 	}
 	else if ( ch == 'a' )
 	{
-		int num = getNum("Choose number to add: ");
-		int row = getNum("Choose row: ") - 1;
-		int col = getNum("Choose column: ") - 1;
+		int num = getSudokuNum("Choose number to add: ");
+		int row = getSudokuNum("Choose row: ") - 1;
+		int col = getSudokuNum("Choose column: ") - 1;
 		addNumToField(row, col, num);
 	}
 }
@@ -74,23 +74,40 @@ void Sudoku::genEmptySudoku()
 		mField[i] = -1;
 		mInitialisedField[i] = -1;
 	}
-	addRandomNumbers(7);
+	int n = getBigNum("How many random numbers to add to the field?\n");
+	addRandomNumbers(n);
 }
 void Sudoku::addRandomNumbers(const int n)
 {
-	for(int i = 0; i < n; i++)
+	int count = 0;
+	while (count < n)
 	{
 		int row = rand() % 9;
 		int col = rand() % 9;
 		int num = rand() % 9;
+
+		if(!numCanBeAtIndex(num, getIndexFromRowCol(row, col)))
+		{
+			continue;
+		}
 		mInitialisedField[getIndexFromRowCol(row, col)] = num;
 		mField[getIndexFromRowCol(row, col)] = num;
+		count++;
+
+		if(!isSolvable())
+		{
+			for(int i = 0; i < FIELDSIZE; i++)
+			{
+				mInitialisedField[i] = -1;
+				mField[i] = -1;
+				count = 0;
+			}
+		}
 	}
 }
 bool Sudoku::checkIfNumInColumn(const int col, const int num)
 {
-	// Both the column and the number can only be between 0 and 9 (including)
-	if(col < 0 || col > 9 || num < 0 || num > 9) {return true;}
+	if(col < 0 || col > 8 || num < 1 || num > 9) {return true;}
 
 	for (int i = col; i < FIELDSIZE-7+col; i+=9)
 	{
@@ -100,8 +117,7 @@ bool Sudoku::checkIfNumInColumn(const int col, const int num)
 }
 bool Sudoku::checkIfNumInRow(const int row, const int num)
 {
-	// Both the column and the number can only be between 0 and 9 (including)
-	if(row < 0 || row > 9 || num < 0 || num > 9) {return true;}
+	if(row < 0 || row > 8 || num < 1 || num > 9) {return true;}
 
 	for (int i = row*9; i < 9*(row+1); i++)
 	{
@@ -125,11 +141,26 @@ bool Sudoku::checkIfNumInBox(const int row, const int col, const int num)
 	}
 	return false;
 }
-int Sudoku::getNum(const char* prompt)
+int Sudoku::getSudokuNum(const char* prompt)
 {
 	// In the context of a classical sudoku field, only suitable numbers are between 1 and 9 (including both)
+	// The caller of this function probably wants to -= 1 from the value to get indexing from 0
 	int num = -1;
 	while(num > 9 || num < 1)
+	{
+		printf(prompt);
+		std::scanf("%d", &num);
+
+		int c;
+		while( (c = std::getchar()) != '\n' && c != EOF );
+	}
+	return num;
+}
+int Sudoku::getBigNum(const char* prompt)
+{
+	// Used to generate random numbers to field. 0...81 (both including) are allowed
+	int num = -1;
+	while(num > 81 || num < 0)
 	{
 		printf(prompt);
 		std::scanf("%d", &num);
@@ -158,7 +189,7 @@ int Sudoku::getIndexFromRowCol(const int row, const int col)
 }
 void Sudoku::addNumToField(const int row, const int col, const int num)
 {
-	if(mInitialisedField[getIndexFromRowCol(row, col) != 0])
+	if(mInitialisedField[getIndexFromRowCol(row, col)] != -1)
 	{
 		printf("\n* Can't overwrite that field!\n\n");
 		return;
@@ -182,10 +213,46 @@ void Sudoku::addNumToField(const int row, const int col, const int num)
 }
 void Sudoku::removeNumFromField(const int row, const int col)
 {
-	if(mInitialisedField[getIndexFromRowCol(row, col) != 0])
+	if(mInitialisedField[getIndexFromRowCol(row, col)] != -1)
 	{
 		printf("\n* Can't remove that field!\n\n");
 		return;
 	}
 	mField[getIndexFromRowCol(row, col)] = -1;
+}
+bool Sudoku::isSolvable()
+{
+	bool solvable = solveSudoku(0);
+	for(int i = 0; i < FIELDSIZE; i++)
+	{
+		mField[i] = mInitialisedField[i];
+	}
+	return solvable;
+}
+bool Sudoku::solveSudoku(const int index)
+{
+	if(index == FIELDSIZE) return true;
+	if(mInitialisedField[index] != -1) return solveSudoku(index + 1);
+
+	for(int i = 1; i < 10; i++)
+	{
+		if (numCanBeAtIndex(i, index)) 
+		{
+			mField[index] = i;
+			if(solveSudoku(index+1)) return true;
+			mField[index] = -1;
+		}
+	}
+	return false;
+}
+bool Sudoku::numCanBeAtIndex(const int num, const int index)
+{
+	const int row = index / 9;
+	const int col = index % 9;
+
+	if ( mInitialisedField[index] != -1 ) return false;
+	if ( checkIfNumInRow(row, num) ) return false;
+	if ( checkIfNumInColumn(col, num) ) return false;
+	if ( checkIfNumInBox(row, col, num) ) return false;
+	return true;
 }
