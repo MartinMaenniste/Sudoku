@@ -9,6 +9,8 @@ int main()
 		sudoku.printField();
 		sudoku.makeMove();
 	}
+	printf("\n***********\n* Solved! *\n***********\n\n");
+	sudoku.printField();
 
 	return 0;
 }

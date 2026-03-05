@@ -38,4 +38,5 @@ private:
     bool isSolvable(); // Returns if the sudoku is solvable or not.
     bool solveSudoku(const int index); // Used by isSolvable - solves the sudoku and writes over mField with values (if it can be solved)
     bool numCanBeAtIndex(const int num, const int index);
+    int howManyFilledSlots();
 };
