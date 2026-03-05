@@ -1,6 +1,7 @@
 #include<cstdio>
 #include<cstdlib>
 #include<memory>
+#include<time.h>
 
 #define FIELDSIZE 81
 
@@ -17,8 +18,10 @@ public:
 
 private:
     std::unique_ptr<int[]> mField;
+    std::unique_ptr<int[]> mInitialisedField;
 
     void genEmptySudoku();
+    void addRandomNumbers(const int n);
 
     bool checkIfNumInColumn(const int col, const int num);
     bool checkIfNumInRow(const int row, const int num);

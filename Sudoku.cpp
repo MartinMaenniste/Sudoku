@@ -1,9 +1,9 @@
 #include "Sudoku.h"
-#include <iostream>
 
 void Sudoku::init()
 {
 	genEmptySudoku();
+	std::srand(time(NULL));
 }
 void Sudoku::printField()
 {
@@ -25,7 +25,14 @@ void Sudoku::printField()
 		if( mField[i] == -1 ) printf(" ");
 		else
 		{
-			printf("%d", mField[i]);
+			if(mInitialisedField[i] != -1)
+			{ // For linux terminals, set immutable numbers to red
+				printf("\033[31m%d\033[0m", mField[i]);
+			}
+			else
+			{
+				printf("%d", mField[i]);
+			}
 		}
 		// Add space after every number to read better
 		printf(" ");
@@ -61,9 +68,23 @@ bool Sudoku::isCompleted()
 void Sudoku::genEmptySudoku()
 {
 	mField = std::make_unique<int[]>(FIELDSIZE);
+	mInitialisedField = std::make_unique<int[]>(FIELDSIZE);
 	for(int i = 0; i < FIELDSIZE; i++)
 	{
 		mField[i] = -1;
+		mInitialisedField[i] = -1;
+	}
+	addRandomNumbers(7);
+}
+void Sudoku::addRandomNumbers(const int n)
+{
+	for(int i = 0; i < n; i++)
+	{
+		int row = rand() % 9;
+		int col = rand() % 9;
+		int num = rand() % 9;
+		mInitialisedField[getIndexFromRowCol(row, col)] = num;
+		mField[getIndexFromRowCol(row, col)] = num;
 	}
 }
 bool Sudoku::checkIfNumInColumn(const int col, const int num)
@@ -137,6 +158,11 @@ int Sudoku::getIndexFromRowCol(const int row, const int col)
 }
 void Sudoku::addNumToField(const int row, const int col, const int num)
 {
+	if(mInitialisedField[getIndexFromRowCol(row, col) != 0])
+	{
+		printf("\n* Can't overwrite that field!\n\n");
+		return;
+	}
 	if ( checkIfNumInRow(row, num) )
 	{
 		printf("\n* Number already in the same row!\n\n");
@@ -156,5 +182,10 @@ void Sudoku::addNumToField(const int row, const int col, const int num)
 }
 void Sudoku::removeNumFromField(const int row, const int col)
 {
+	if(mInitialisedField[getIndexFromRowCol(row, col) != 0])
+	{
+		printf("\n* Can't remove that field!\n\n");
+		return;
+	}
 	mField[getIndexFromRowCol(row, col)] = -1;
 }
